@@ -20,6 +20,10 @@ import {
   itemToGeoJSONFeature,
   getCoordinatesFromItem,
 } from './util'
+import {TouchableOpacity, Text, View} from 'react-native'
+import colours from '../../src/constants/colorsList'
+import fontsTata, { fontSize } from '../../src/constants/fontsList';
+
 
 export default class ClusteredMapView extends PureComponent {
 
@@ -29,6 +33,7 @@ export default class ClusteredMapView extends PureComponent {
     this.state = {
       data: [], // helds renderable clusters and markers
       region: props.region || props.initialRegion, // helds current map region
+      mapType: 'standard'
     }
 
     this.isAndroid = Platform.OS === 'android'
@@ -128,30 +133,43 @@ export default class ClusteredMapView extends PureComponent {
     const { style, ...props } = this.props
 
     return (
-      <MapView
-        {...props}
-        style={style}
-        ref={this.mapRef}
-        onRegionChangeComplete={this.onRegionChangeComplete}>
-        {
-          this.props.clusteringEnabled && this.state.data.map((d) => {
-            if (d.properties.point_count === 0)
-              return this.props.renderMarker(d.properties.item)
-
-            return (
-              <ClusterMarker
-                {...d}
-                onPress={this.onClusterPress}
-                renderCluster={this.props.renderCluster}
-                key={`cluster-${d.properties.cluster_id}`} />
-            )
-          })
-        }
-        {
-          !this.props.clusteringEnabled && this.props.data.map(d => this.props.renderMarker(d))
-        }
-        {this.props.children}
-      </MapView>
+      <View style={style}>
+        <MapView
+          {...props}
+          style={style}
+          ref={this.mapRef}
+          mapType={this.state.mapType}
+          onRegionChangeComplete={this.onRegionChangeComplete}>
+          {
+            this.props.clusteringEnabled && this.state.data.map((d) => {
+              if (d.properties.point_count === 0)
+                return this.props.renderMarker(d.properties.item)
+              return (
+                <ClusterMarker
+                  {...d}
+                  onPress={this.onClusterPress}
+                  renderCluster={this.props.renderCluster}
+                  key={`cluster-${d.properties.cluster_id}`} />
+              )
+            })
+          }
+          {
+            !this.props.clusteringEnabled && this.props.data.map(d => this.props.renderMarker(d))
+          }
+          {this.props.children}
+        </MapView>
+        {props.showMapTypeOptions ? (
+        <View style={props.mapTypeOptionsStyle ? props.mapTypeOptionsStyle : {backgroundColor:colours.white,position:'absolute',top:'90%',right:'5%',paddingHorizontal: 8, paddingVertical: 5, borderRadius: 10 }} >
+          <TouchableOpacity
+            onPress={() => this.setState({ mapType: this.state.mapType == "hybrid" ? "standard" : "hybrid" })}
+          >
+            <Text
+              style={{ fontFamily: fontsTata.UBold, color: colours.textColorHeader, fontSize: fontSize.med }}
+            >{this.state.mapType == "hybrid" ? "Normal View" : "Satellite View"}</Text>
+          </TouchableOpacity>
+        </View>
+        ) : null}
+      </View>
     )
   }
 }
